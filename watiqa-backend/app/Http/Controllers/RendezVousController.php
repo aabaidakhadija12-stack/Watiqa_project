@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RendezVous;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreRendezVousRequest;
 use Carbon\Carbon;
 
 class RendezVousController extends Controller
@@ -51,14 +52,9 @@ class RendezVousController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreRendezVousRequest $request)
     {
-        $data = $request->validate([
-            'date_rdv'  => 'required|date|after_or_equal:today',
-            'heure_rdv' => 'required|string|regex:/^\\d{2}:\\d{2}$/',
-            'motif'     => 'required|string|max:255',
-            'service'   => 'nullable|string|max:100',
-        ]);
+        $data = $request->validated();
 
         $exists = RendezVous::where('date_rdv', $data['date_rdv'])
             ->where('heure_rdv', $data['heure_rdv'])
@@ -97,4 +93,3 @@ class RendezVousController extends Controller
         return response()->json(['message' => 'Rendez-vous annulé']);
     }
 }
-

@@ -27,6 +27,10 @@ Route::prefix('auth')->group(function () {
     Route::post('/resend-verification', [AuthController::class, 'resendVerification']);
 });
 
+// Assistant IA (Public)
+Route::post('/assistant', [AssistantController::class, 'chat']);
+Route::get('/assistant/tts', [AssistantController::class, 'tts']);
+
 // ==================== PROTECTED ROUTES ====================
 Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
@@ -52,9 +56,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
 
     // Suivi
     Route::get('/suivi/{numeroSuivi}', [SuiviController::class, 'track']); // Suivre une demande
-
-    // Assistant IA
-    Route::post('/assistant', [AssistantController::class, 'chat']);
 
     // ==================== ADMIN ====================
     Route::prefix('admin')->middleware('admin')->group(function () {

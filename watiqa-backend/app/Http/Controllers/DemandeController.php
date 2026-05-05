@@ -4,19 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Demande;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreDemandeRequest;
 use Illuminate\Support\Str;
 
 class DemandeController extends Controller
 {
-    const TYPES = [
-        'naissance',
-        'deces',
-        'celibat',
-        'residence',
-        'vie',
-        'casier_judiciaire',
-    ];
-
     public function index(Request $request)
     {
         $demandes = Demande::where('user_id', $request->user()->id)
@@ -26,15 +18,8 @@ class DemandeController extends Controller
         return response()->json($demandes);
     }
 
-    public function store(Request $request)
+    public function store(StoreDemandeRequest $request)
     {
-        $request->validate([
-            'type' => 'required|in:' . implode(',', self::TYPES),
-            'data' => 'required|array',
-        ]);
-
-        $this->validateByType($request->type, $request->data);
-
         $demande = Demande::create([
             'user_id'       => $request->user()->id,
             'type'          => $request->type,
@@ -84,52 +69,4 @@ class DemandeController extends Controller
 
         return $numero;
     }
-
-    private function validateByType(string $type, array $data): void
-    {
-        $rules = match ($type) {
-            'naissance' => [
-                'nom'            => 'required|string',
-                'prenom'         => 'required|string',
-                'date_naissance' => 'required|date',
-                'lieu_naissance' => 'required|string',
-                'nom_pere'       => 'required|string',
-                'nom_mere'       => 'required|string',
-            ],
-            'deces' => [
-                'nom_defunt'    => 'required|string',
-                'date_deces'    => 'required|date',
-                'lieu_deces'    => 'required|string',
-                'nom_declarant' => 'required|string',
-                'cin_declarant' => 'required|string',
-            ],
-            'celibat' => [
-                'nom'            => 'required|string',
-                'prenom'         => 'required|string',
-                'date_naissance' => 'required|date',
-                'cin'            => 'required|string',
-            ],
-            'residence' => [
-                'nom'     => 'required|string',
-                'prenom'  => 'required|string',
-                'adresse' => 'required|string',
-                'cin'     => 'required|string',
-            ],
-            'vie' => [
-                'nom'    => 'required|string',
-                'prenom' => 'required|string',
-                'cin'    => 'required|string',
-            ],
-            'casier_judiciaire' => [
-                'nom'    => 'required|string',
-                'prenom' => 'required|string',
-                'cin'    => 'required|string',
-                'motif'  => 'required|string',
-            ],
-            default => [],
-        };
-
-        validator($data, $rules)->validate();
-    }
 }
-
