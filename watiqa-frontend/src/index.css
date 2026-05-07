@@ -1,0 +1,188 @@
+@import "tailwindcss";
+:root {
+  --green-dark: #1a4a2e;
+  --green-primary: #2d6a4f;
+  --green-mid: #40916c;
+  --green-light: #74c69d;
+  --green-pale: #d8f3dc;
+  --gold: #c9a84c;
+  --gold-light: #f0d080;
+  --white: #ffffff;
+  --off-white: #f8faf9;
+  --gray-light: #eef2ef;
+  --gray-mid: #b7c4bb;
+  --gray-dark: #4a5568;
+  --text-dark: #1a2e23;
+  --text-mid: #3d5a47;
+  --shadow-sm: 0 2px 8px rgba(45,106,79,0.1);
+  --shadow-md: 0 4px 20px rgba(45,106,79,0.15);
+  --shadow-lg: 0 8px 40px rgba(45,106,79,0.2);
+  --radius: 12px;
+  --radius-lg: 20px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-dark);
+  -webkit-font-smoothing: antialiased;
+}
+
+html[dir="rtl"] body {
+  font-family: 'Tajawal', 'Cairo', sans-serif;
+}
+
+html[dir="rtl"] .section-title,
+html[dir="rtl"] h1, html[dir="rtl"] h2, html[dir="rtl"] h3 {
+  font-family: 'Tajawal', sans-serif;
+}
+
+html[dir="ltr"] .section-title,
+html[dir="ltr"] h1, html[dir="ltr"] h2, html[dir="ltr"] h3 {
+  font-family: 'Playfair Display', serif;
+}
+
+.bg-map {
+  background: 
+    radial-gradient(ellipse at 20% 50%, rgba(116,198,157,0.15) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(45,106,79,0.1) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 80%, rgba(201,168,76,0.08) 0%, transparent 40%),
+    linear-gradient(135deg, #e8f5ee 0%, #f0f8f4 40%, #e4f2e8 100%);
+  background-attachment: fixed;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--green-primary), var(--green-dark));
+  color: white;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 50px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(45,106,79,0.3);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(45,106,79,0.4);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--green-primary);
+  border: 2px solid var(--green-primary);
+  padding: 10px 24px;
+  border-radius: 50px;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: var(--green-pale);
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px 16px 12px 44px;
+  border: 1.5px solid #dde8e2;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  background: white;
+  color: var(--text-dark);
+  transition: all 0.2s;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+}
+
+.input-wrapper {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.input-wrapper .icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--green-mid);
+  width: 18px;
+  height: 18px;
+}
+
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  box-shadow: var(--shadow-md);
+}
+
+.label {
+  display: block;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-mid);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--green-pale);
+}
+
+a { text-decoration: none; color: inherit; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--gray-light); }
+::-webkit-scrollbar-thumb { background: var(--green-light); border-radius: 3px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in { animation: fadeIn 0.4s ease forwards; }
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 20px; height: 20px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: inline-block;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+}
+
