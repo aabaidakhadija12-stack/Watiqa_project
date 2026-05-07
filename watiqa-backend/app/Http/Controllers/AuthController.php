@@ -30,15 +30,14 @@ class AuthController extends Controller
             'password' => Hash::make($data['password']),
             'phone'    => $data['phone'] ?? null,
             'cin'      => $data['cin'] ?? null,
-            'email_verified_at' => Carbon::now(),
         ]);
 
-        $token = $user->createToken('watiqa-token')->plainTextToken;
+        $this->sendVerificationCode($user);
 
         return response()->json([
-            'message' => 'تم إنشاء الحساب بنجاح.',
+            'message' => 'Account created. Please verify your email with the code we sent.',
             'user' => $user->fresh(),
-            'token' => $token,
+            'requires_email_verification' => true,
         ], 201);
     }
 
@@ -53,29 +52,23 @@ class AuthController extends Controller
             'code' => 'required|string|size:6',
         ]);
 
-        $user = User::where('email', $data['email'])->first();
-
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['البريد الإلكتروني أو كلمة المرور غير صحيحة'],
-            ]);
-        }
+        $user = $this->findUserForAuth($data['email'], $data['password']);
 
         if ($user->hasVerifiedEmail()) {
-            return response()->json(['message' => 'البريد الإلكتروني مؤكد مسبقاً']);
+            return response()->json(['message' => 'Email is already verified.']);
         }
 
         if (! $user->email_verification_code || ! $user->email_verification_code_expires_at) {
-            return response()->json(['message' => 'لا يوجد رمز تحقق نشط. اطلب إعادة الإرسال.'], 422);
+            return response()->json(['message' => 'No active verification code. Please request a new one.'], 422);
         }
 
         if (Carbon::now()->greaterThan($user->email_verification_code_expires_at)) {
-            return response()->json(['message' => 'انتهت صلاحية رمز التحقق. اطلب إعادة الإرسال.'], 422);
+            return response()->json(['message' => 'Verification code expired. Please request a new one.'], 422);
         }
 
         if (! Hash::check($data['code'], $user->email_verification_code)) {
             throw ValidationException::withMessages([
-                'code' => ['رمز التحقق غير صحيح'],
+                'code' => ['Invalid verification code.'],
             ]);
         }
 
@@ -90,13 +83,40 @@ class AuthController extends Controller
         $token = $user->createToken('watiqa-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'تم تأكيد البريد الإلكتروني بنجاح',
+            'message' => 'Email verified successfully.',
             'user' => $user->fresh(),
             'token' => $token,
         ]);
     }
 
+    /**
+     * POST /api/auth/resend-verification
+     */
+    public function resendVerification(Request $request)
+    {
+        $data = $request->validate([
+            'email' => 'required|email',
+            'password' => 'required|string',
+        ]);
 
+        $user = $this->findUserForAuth($data['email'], $data['password']);
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json(['message' => 'Email is already verified.']);
+        }
+
+        if ($user->email_verification_sent_at && Carbon::now()->diffInSeconds($user->email_verification_sent_at) < 60) {
+            return response()->json([
+                'message' => 'Please wait one minute before requesting a new code.',
+            ], 429);
+        }
+
+        $this->sendVerificationCode($user);
+
+        return response()->json([
+            'message' => 'Verification code sent.',
+        ]);
+    }
 
     /**
      * POST /api/auth/login
@@ -108,21 +128,24 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        $user = User::where('email', $data['email'])->first();
+        $user = $this->findUserForAuth($data['email'], $data['password']);
 
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'email' => ['البريد الإلكتروني أو كلمة المرور غير صحيحة'],
-            ]);
+        if (! $user->hasVerifiedEmail()) {
+            if (! $user->email_verification_code || ! $user->email_verification_code_expires_at || Carbon::now()->greaterThan($user->email_verification_code_expires_at)) {
+                $this->sendVerificationCode($user);
+            }
+
+            return response()->json([
+                'message' => 'Your email address is not verified. We sent you a verification code.',
+                'requires_email_verification' => true,
+            ], 403);
         }
-
-
 
         $user->tokens()->delete();
         $token = $user->createToken('watiqa-token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Connexion réussie',
+            'message' => 'Connexion reussie',
             'user'    => $user,
             'token'   => $token,
         ]);
@@ -135,7 +158,7 @@ class AuthController extends Controller
     {
         $request->user()->currentAccessToken()?->delete();
 
-        return response()->json(['message' => 'Déconnecté avec succès']);
+        return response()->json(['message' => 'Deconnecte avec succes']);
     }
 
     /**
@@ -146,11 +169,39 @@ class AuthController extends Controller
         return response()->json($request->user());
     }
 
+    private function findUserForAuth(string $email, string $password): User
+    {
+        $user = User::where('email', $email)->first();
+
+        if (! $user || ! Hash::check($password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => ['Invalid email or password.'],
+            ]);
+        }
+
+        return $user;
+    }
+
     private function generateSixDigitCode(): string
     {
         return (string) random_int(100000, 999999);
     }
 
+    private function sendVerificationCode(User $user): void
+    {
+        $code = $this->generateSixDigitCode();
 
+        $user->forceFill([
+            'email_verification_code' => Hash::make($code),
+            'email_verification_code_expires_at' => Carbon::now()->addMinutes(15),
+            'email_verification_sent_at' => Carbon::now(),
+        ])->save();
+
+        Mail::raw(
+            "Your Watiqa verification code is: {$code}\n\nThis code expires in 15 minutes.",
+            fn ($message) => $message
+                ->to($user->email)
+                ->subject('Watiqa verification code')
+        );
+    }
 }
-

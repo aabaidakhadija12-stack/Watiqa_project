@@ -14,6 +14,7 @@ class AdminController extends Controller
         return response()->json([
             'users' => User::count(),
             'demandes' => Demande::count(),
+            'demandes_en_cours' => Demande::whereIn('statut', ['en_attente', 'en_traitement'])->count(),
             'rendezvous' => RendezVous::count(),
         ]);
     }
@@ -67,6 +68,17 @@ class AdminController extends Controller
             'message' => 'Statut updated',
             'demande' => $demande,
         ]);
+    }
+
+    public function listRendezVous()
+    {
+        return response()->json(
+            RendezVous::query()
+                ->with('user:id,name,email,phone,cin')
+                ->latest('date_rdv')
+                ->latest('heure_rdv')
+                ->get()
+        );
     }
 }
 

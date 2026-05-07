@@ -51,6 +51,8 @@ class User extends Authenticatable implements MustVerifyEmailContract
     {
         return [
             'email_verified_at' => 'datetime',
+            'email_verification_code_expires_at' => 'datetime',
+            'email_verification_sent_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
