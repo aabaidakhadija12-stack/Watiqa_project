@@ -214,7 +214,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const tr = useT(lang);
 
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', cin: '', password: '', confirm: '' });
   const [code, setCode] = useState('');
   const [step, setStep] = useState('register'); // register | verify
   const [busy, setBusy] = useState(false);
@@ -230,8 +230,10 @@ export function RegisterPage() {
     setBusy(true);
     try {
       await api.post('/auth/register', {
-        name: form.name,
+        name: form.name.trim(),
         email: form.email,
+        phone: form.phone.trim(),
+        cin: form.cin.trim().toUpperCase(),
         password: form.password,
         password_confirmation: form.confirm,
       });
@@ -302,6 +304,8 @@ export function RegisterPage() {
               {[
                 { key: 'name', label: tr.fullname, placeholder: lang === 'ar' ? 'أدخل اسمك الكامل' : 'Entrer votre nom complet' },
                 { key: 'email', label: tr.email, placeholder: tr.email_placeholder, type: 'email' },
+                { key: 'phone', label: lang === 'ar' ? 'الهاتف' : 'Telephone', placeholder: '+212612345678', type: 'tel' },
+                { key: 'cin', label: 'CIN', placeholder: 'AB123456' },
                 { key: 'password', label: tr.password, placeholder: tr.choose_password, type: 'password' },
                 { key: 'confirm', label: tr.confirm_password, placeholder: tr.confirm_password_placeholder, type: 'password' },
               ].map(field => (
@@ -309,7 +313,7 @@ export function RegisterPage() {
                   <label className="form-label">{field.label}</label>
                   <div className="input-wrap">
                     <input className="form-input" type={field.type || 'text'} placeholder={field.placeholder}
-                      value={form[field.key]} onChange={e => set(field.key)(e.target.value)} />
+                      value={form[field.key]} onChange={e => set(field.key)(field.key === 'cin' ? e.target.value.toUpperCase() : e.target.value)} />
                   </div>
                 </div>
               ))}

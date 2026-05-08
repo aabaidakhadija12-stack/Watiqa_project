@@ -6,7 +6,7 @@ import api, { clearSession } from '../../api/api';
 import logo from '../../assets/logo.png';
 import avatar from '../../assets/avatar.png';
 import './Admin.css';
-import { ArrowLeft, CalendarDays, FileText, Home, LogOut, Users } from 'lucide-react';
+import { ArrowLeft, BarChart3, CalendarDays, FileText, Home, LogOut, Users } from 'lucide-react';
 
 export default function AdminLayout({ children, activePage }) {
   const { lang, setLang } = useLanguage();
@@ -17,6 +17,7 @@ export default function AdminLayout({ children, activePage }) {
   const labels = {
     roleAdmin: lang === 'ar' ? 'مسؤول' : 'Administrateur',
     dashboard: lang === 'ar' ? 'لوحة التحكم' : 'Tableau de bord',
+    analytics: lang === 'ar' ? 'التحليلات' : 'Analyses',
     demandes: lang === 'ar' ? 'الطلبات' : 'Demandes',
     rendezvous: lang === 'ar' ? 'المواعيد' : 'Rendez-vous',
     users: lang === 'ar' ? 'المستخدمون' : 'Utilisateurs',
@@ -26,6 +27,7 @@ export default function AdminLayout({ children, activePage }) {
 
   const navItems = [
     { id: '/admin', page: 'admin-dashboard', label: labels.dashboard, icon: <Home size={18} /> },
+    { id: '/admin/analytics', page: 'admin-analytics', label: labels.analytics, icon: <BarChart3 size={18} /> },
     { id: '/admin/demandes', page: 'admin-demandes', label: labels.demandes, icon: <FileText size={18} /> },
     { id: '/admin/rendezvous', page: 'admin-rendezvous', label: labels.rendezvous, icon: <CalendarDays size={18} /> },
     { id: '/admin/users', page: 'admin-users', label: labels.users, icon: <Users size={18} /> },

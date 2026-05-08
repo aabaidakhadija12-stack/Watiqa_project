@@ -9,15 +9,30 @@ import volumeImg from '../assets/volume.png';
 import audioImg from '../assets/audio.png';
 import noShoutingImg from '../assets/no-shouting.png';
 
-const SYSTEM_PROMPT = `Tu es l'assistant Watiqa, spécialisé dans les services administratifs marocains. Tu aides les citoyens avec:
-- Les demandes de documents officiels (acte de naissance, certificat de résidence, certificat de vie, certificat de célibat, casier judiciaire, acte de décès)
-- Les procédures administratives marocaines
-- Les pièces justificatives nécessaires
-- Les délais et frais
-- Les rendez-vous auprès des communes
+const SYSTEM_PROMPT = `Tu es l'assistant Watiqa, spécialisé dans les services administratifs marocains de la plateforme Watiqa.
 
-Tu réponds de manière concise, claire et bienveillante. Si quelqu'un écrit en arabe, réponds en arabe. Sinon réponds en français.
-Pour les pièces nécessaires, liste-les de manière structurée.`;
+SERVICES DISPONIBLES SUR WATIQA :
+1. Acte de naissance (رسم الولادة) — délai 3-5 jours
+2. Certificat de résidence (شهادة الإقامة) — délai 1-2 jours
+3. Certificat de vie (شهادة الحياة) — délai 1-2 jours
+4. Certificat de célibat (شهادة العزوبة) — délai 2-3 jours
+5. Casier judiciaire (السجل العدلي) — délai 5-7 jours
+6. Acte de décès (رسم الوفاة) — délai 2-3 jours
+
+PAGES DE LA PLATEFORME :
+- Guichet (الشباك) : pour soumettre les demandes de documents
+- Rendez-vous (المواعيد) : pour réserver un créneau en commune
+- Suivi (المتابعة) : pour suivre l'état d'une demande avec le numéro de dossier
+
+RÈGLES DE RÉPONSE :
+- Si l'utilisateur écrit en arabe → réponds UNIQUEMENT en arabe
+- Si l'utilisateur écrit en français → réponds UNIQUEMENT en français
+- Donne toujours les étapes numérotées (1️⃣ 2️⃣ 3️⃣...) pour chaque procédure
+- Liste clairement les documents nécessaires
+- Indique toujours le délai de traitement
+- Rappelle que le suivi est disponible depuis la page Suivi
+- Sois concis, clair et bienveillant
+- Utilise des emojis pour rendre la réponse lisible`;
 
 export default function AssistantPage() {
   const navigate = useNavigate();
@@ -54,57 +69,107 @@ export default function AssistantPage() {
 
     try {
       const res = await api.post('/assistant', { message: text });
-      const reply = res.data.reply || 'Désolé, une erreur est survenue.';
+      const reply = res.data.reply || (lang === 'ar' ? 'عذراً، حدث خطأ.' : 'Désolé, une erreur est survenue.');
       setMessages(m => [...m, { role: 'assistant', text: reply }]);
 
       // Auto speak assistant reply
       speak(reply);
     } catch (e) {
-      setMessages(m => [...m, { role: 'assistant', text: '❌ Erreur de connexion. Veuillez réessayer.' }]);
+      setMessages(m => [...m, { role: 'assistant', text: lang === 'ar' ? '❌ خطأ في الاتصال. حاول مجدداً.' : '❌ Erreur de connexion. Veuillez réessayer.' }]);
     }
     setLoading(false);
   };
 
+  // Extract: first line (title) + numbered steps only
+  const extractSpeakableText = (text) => {
+    const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+    const firstLine = lines[0] || '';
+    // Match emoji numbers like 1️⃣ (digit + U+FE0F + U+20E3) or plain "1." / "1)"
+    const stepLines = lines.slice(1).filter(l =>
+      /^\d\uFE0F\u20E3/.test(l) || /^\d+[.)]\s/.test(l)
+    );
+    return [firstLine, ...stepLines].join('. ');
+  };
+
+  // Split text into chunks <=190 chars at sentence breaks
+  const splitIntoChunks = (text, maxLen = 190) => {
+    const chunks = [];
+    const parts = text.split('. ');
+    let current = '';
+    for (const p of parts) {
+      const candidate = current ? current + '. ' + p : p;
+      if (candidate.length > maxLen && current.length > 0) {
+        chunks.push(current.trim());
+        current = p;
+      } else {
+        current = candidate;
+      }
+    }
+    if (current.trim()) chunks.push(current.trim());
+    return chunks.length > 0 ? chunks : [text.substring(0, maxLen)];
+  };
+
   const speak = async (text) => {
     stopSpeaking();
-    
-    const cleanText = text.replace(/[\u{1F600}-\u{1F6FF}]/gu, '').replace(/[*#_]/g, '');
+
     const isTextArabic = /[\u0600-\u06FF]/.test(text);
-    const lang = isTextArabic ? 'ar' : 'fr';
+    const ttsLang = isTextArabic ? 'ar' : 'fr';
+
+    // Extract only title + steps for reading
+    const speakableText = extractSpeakableText(text);
+    const cleanText = speakableText
+      .replace(/[\u{1F300}-\u{1FAFF}]/gu, '')
+      .replace(/[*#_]/g, '')
+      .trim();
+
+    const chunks = splitIntoChunks(cleanText);
+    let stopped = false;
+
+    // Stop handler needs to know about this sequence
+    window._watiqaStopChunks = () => { stopped = true; };
+
+    const playChunk = (index) => {
+      if (stopped || index >= chunks.length) {
+        if (!stopped) setIsSpeaking(false);
+        return;
+      }
+      const chunk = chunks[index];
+      const url = `${api.defaults.baseURL}/assistant/tts?text=${encodeURIComponent(chunk)}&lang=${ttsLang}`;
+      const audio = new Audio(url);
+      window.currentWatiqaAudio = audio;
+      if (index === 0) setIsSpeaking(true);
+      audio.onended = () => playChunk(index + 1);
+      audio.onerror = () => { setIsSpeaking(false); fallbackToSynth(cleanText, ttsLang); };
+      audio.play().catch(() => { setIsSpeaking(false); fallbackToSynth(cleanText, ttsLang); });
+    };
 
     try {
-      // Use Laravel Backend Proxy to bypass Google's CORS and Referer restrictions entirely
-      const url = `${api.defaults.baseURL}/assistant/tts?text=${encodeURIComponent(cleanText.substring(0, 200))}&lang=${lang}`;
-      const audio = new Audio(url);
-      
-      audio.onplay = () => setIsSpeaking(true);
-      audio.onended = () => setIsSpeaking(false);
-      audio.onerror = () => {
-        setIsSpeaking(false);
-        fallbackToSynth(cleanText, lang);
-      };
-      
-      window.currentWatiqaAudio = audio;
-      audio.play().catch(() => fallbackToSynth(cleanText, lang));
+      playChunk(0);
     } catch (e) {
-      fallbackToSynth(cleanText, lang);
+      fallbackToSynth(cleanText, ttsLang);
     }
   };
 
   const fallbackToSynth = (text, lang) => {
     if (!synthRef.current) return;
     const utter = new SpeechSynthesisUtterance(text.substring(0, 300));
-    utter.lang = lang === 'ar' ? 'ar-SA' : 'fr-FR';
-    
+    // Use Moroccan Arabic dialect for AR, standard French for FR
+    utter.lang = lang === 'ar' ? 'ar-MA' : 'fr-FR';
+
     const voices = synthRef.current.getVoices();
     let voice;
     if (lang === 'ar') {
-      voice = voices.find(v => v.lang.startsWith('ar') || v.name.toLowerCase().includes('arabic') || v.name.toLowerCase().includes('ar-sa') || v.name.toLowerCase().includes('ar-ae'));
+      // Prefer ar-MA, fallback to any Arabic voice
+      voice = voices.find(v => v.lang === 'ar-MA')
+        || voices.find(v => v.lang.startsWith('ar'))
+        || voices.find(v => v.name.toLowerCase().includes('arabic'));
     } else {
-      voice = voices.find(v => v.lang.startsWith('fr') || v.name.toLowerCase().includes('french'));
+      voice = voices.find(v => v.lang === 'fr-FR')
+        || voices.find(v => v.lang.startsWith('fr'))
+        || voices.find(v => v.name.toLowerCase().includes('french'));
     }
     if (voice) utter.voice = voice;
-    
+
     utter.rate = 1.0;
     setIsSpeaking(true);
     utter.onend = () => setIsSpeaking(false);
@@ -113,6 +178,8 @@ export default function AssistantPage() {
   };
 
   const stopSpeaking = () => {
+    // Stop chunk sequence if running
+    if (window._watiqaStopChunks) window._watiqaStopChunks();
     if (window.currentWatiqaAudio) {
       window.currentWatiqaAudio.pause();
       window.currentWatiqaAudio.currentTime = 0;
@@ -151,8 +218,18 @@ export default function AssistantPage() {
   };
 
   const suggestions = lang === 'ar'
-    ? ['ما الوثائق اللازمة لشهادة الإقامة؟', 'كيف أطلب رسم الولادة؟', 'ما هي مدة الحصول على الوثائق؟']
-    : ['Documents pour un certificat de résidence ?', 'Comment demander un acte de naissance ?', 'Délai casier judiciaire ?'];
+    ? [
+        'كيف أطلب رسم الولادة؟',
+        'خطوات شهادة الإقامة؟',
+        'كيف أتابع طلبي؟',
+        'ما هي آجال المعالجة؟',
+      ]
+    : [
+        'Comment demander un acte de naissance ?',
+        'Étapes pour un certificat de résidence ?',
+        'Comment suivre ma demande ?',
+        'Quels sont les délais de traitement ?',
+      ];
 
   return (
     <div style={{ height: '100vh', overflow: 'hidden', background: 'linear-gradient(160deg, #e8f5e9 0%, #f0f9ff 50%, #e8f5e9 100%)' }} dir={isRTL ? 'rtl' : 'ltr'}>

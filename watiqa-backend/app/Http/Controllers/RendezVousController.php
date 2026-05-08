@@ -12,8 +12,11 @@ class RendezVousController extends Controller
 {
     public function index(Request $request)
     {
+        RendezVous::syncExpiredStatuses();
+
         $rdvs = RendezVous::where('user_id', $request->user()->id)
-            ->latest()
+            ->latest('date_rdv')
+            ->latest('heure_rdv')
             ->get();
 
         return response()->json($rdvs);
@@ -41,7 +44,7 @@ class RendezVousController extends Controller
         }
 
         $taken = RendezVous::whereDate('date_rdv', $date->toDateString())
-            ->where('statut', '!=', 'annule')
+            ->whereIn('statut', RendezVous::BLOCKING_STATUSES)
             ->pluck('heure_rdv')
             ->toArray();
 
@@ -76,7 +79,7 @@ class RendezVousController extends Controller
 
         $exists = RendezVous::where('date_rdv', $data['date_rdv'])
             ->where('heure_rdv', $data['heure_rdv'])
-            ->where('statut', '!=', 'annule')
+            ->whereIn('statut', RendezVous::BLOCKING_STATUSES)
             ->exists();
 
         if ($exists) {
@@ -91,11 +94,11 @@ class RendezVousController extends Controller
             'heure_rdv' => $data['heure_rdv'],
             'motif'     => $data['motif'],
             'service'   => $data['service'] ?? 'Guichet principal',
-            'statut'    => 'confirme',
+            'statut'    => RendezVous::STATUS_PENDING,
         ]);
 
         return response()->json([
-            'message' => 'Rendez-vous confirmé',
+            'message' => 'Rendez-vous envoye pour validation',
             'rdv'     => $rdv,
         ], 201);
     }
@@ -106,7 +109,13 @@ class RendezVousController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
-        $rdv->update(['statut' => 'annule']);
+        if ($rdv->statut === RendezVous::STATUS_PASSED) {
+            return response()->json([
+                'message' => 'Impossible d annuler un rendez-vous deja passe.',
+            ], 422);
+        }
+
+        $rdv->update(['statut' => RendezVous::STATUS_CANCELLED]);
 
         return response()->json(['message' => 'Rendez-vous annulé']);
     }

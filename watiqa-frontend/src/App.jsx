@@ -18,6 +18,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminDemandesPage from './pages/admin/AdminDemandesPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminRendezVousPage from './pages/admin/AdminRendezVousPage';
+import AdminAnalyticsPage from './pages/admin/AdminAnalyticsPage';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -70,6 +71,7 @@ const MainApp = () => {
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminRoute><AdminDashboardPage /></AdminRoute>} />
+        <Route path="/admin/analytics" element={<AdminRoute><AdminAnalyticsPage /></AdminRoute>} />
         <Route path="/admin/demandes" element={<AdminRoute><AdminDemandesPage /></AdminRoute>} />
         <Route path="/admin/rendezvous" element={<AdminRoute><AdminRendezVousPage /></AdminRoute>} />
         <Route path="/admin/users" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />

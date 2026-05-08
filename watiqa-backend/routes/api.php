@@ -67,5 +67,6 @@ Route::middleware(['auth:sanctum', 'verified'])->group(function () {
         Route::patch('/demandes/{id}/statut', [AdminController::class, 'updateDemandeStatus']);
 
         Route::get('/rendezvous', [AdminController::class, 'listRendezVous']);
+        Route::patch('/rendezvous/{id}/statut', [AdminController::class, 'updateRendezVousStatus']);
     });
 });

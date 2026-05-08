@@ -17,19 +17,32 @@ class AuthController extends Controller
     public function register(Request $request)
     {
         $data = $request->validate([
-            'name'     => 'required|string|max:255',
+            'name'     => [
+                'required',
+                'string',
+                'min:5',
+                'max:255',
+                'regex:/^[\pL\s.\'-]+$/u',
+                function ($attribute, $value, $fail) {
+                    $lettersOnly = preg_replace('/[^\pL]/u', '', $value);
+
+                    if (mb_strlen($lettersOnly) < 4 || preg_match('/(.)\1{3,}/u', $lettersOnly)) {
+                        $fail('The name must look like a real full name.');
+                    }
+                },
+            ],
             'email'    => 'required|email|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'phone'    => 'nullable|string|max:20',
-            'cin'      => 'nullable|string|max:20',
+            'phone'    => ['required', 'string', 'regex:/^\+2126\d{8}$/', 'unique:users,phone'],
+            'cin'      => ['required', 'string', 'regex:/^[A-Z]{2}\d{5,8}$/', 'unique:users,cin'],
         ]);
 
         $user = User::create([
-            'name'     => $data['name'],
+            'name'     => trim($data['name']),
             'email'    => $data['email'],
             'password' => Hash::make($data['password']),
-            'phone'    => $data['phone'] ?? null,
-            'cin'      => $data['cin'] ?? null,
+            'phone'    => $data['phone'],
+            'cin'      => strtoupper($data['cin']),
         ]);
 
         $this->sendVerificationCode($user);

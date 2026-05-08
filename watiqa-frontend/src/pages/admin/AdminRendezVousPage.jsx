@@ -3,6 +3,8 @@ import { useLanguage } from '../../context/LanguageContext';
 import api from '../../api/api';
 import AdminLayout from './AdminLayout';
 
+const statusOptions = ['en_attente', 'confirme', 'annule', 'passe'];
+
 export default function AdminRendezVousPage() {
   const { lang } = useLanguage();
   const isRTL = lang === 'ar';
@@ -17,33 +19,53 @@ export default function AdminRendezVousPage() {
     date: lang === 'ar' ? 'التاريخ' : 'Date',
     time: lang === 'ar' ? 'الوقت' : 'Heure',
     service: lang === 'ar' ? 'الخدمة' : 'Service',
-    motif: lang === 'ar' ? 'السبب' : 'Motif',
+    motif: lang === 'ar' ? 'الجماعة' : 'Commune',
     status: lang === 'ar' ? 'الحالة' : 'Statut',
-    confirmed: lang === 'ar' ? 'مؤكد' : 'Confirmé',
-    cancelled: lang === 'ar' ? 'ملغى' : 'Annulé',
+    actions: lang === 'ar' ? 'قرار الإدارة' : 'Decision admin',
+    updatedError: lang === 'ar' ? 'تعذر تحديث الموعد' : 'Erreur lors de la mise a jour du rendez-vous',
+  };
+
+  const statusLabels = {
+    en_attente: lang === 'ar' ? 'في انتظار التحقق' : 'En attente',
+    confirme: lang === 'ar' ? 'مؤكد' : 'Confirme',
+    annule: lang === 'ar' ? 'ملغى' : 'Annule',
+    passe: lang === 'ar' ? 'مر عليه الوقت' : 'Passe',
+  };
+
+  const fetchRendezVous = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get('/admin/rendezvous');
+      setRendezvous(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    const fetchRendezVous = async () => {
-      try {
-        const res = await api.get('/admin/rendezvous');
-        setRendezvous(res.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchRendezVous();
   }, []);
 
+  const handleUpdateStatus = async (id, statut) => {
+    try {
+      await api.patch(`/admin/rendezvous/${id}/statut`, { statut });
+      fetchRendezVous();
+    } catch (e) {
+      alert(e.response?.data?.message || labels.updatedError);
+    }
+  };
+
   const getStatusBadge = (status) => {
-    const isCancelled = status === 'annule';
-    return (
-      <span className={`admin-pill ${isCancelled ? 'pill-danger' : 'pill-success'}`}>
-        {isCancelled ? labels.cancelled : labels.confirmed}
-      </span>
-    );
+    const pillClass = {
+      en_attente: 'pill-warning',
+      confirme: 'pill-success',
+      annule: 'pill-danger',
+      passe: 'pill-info',
+    }[status] || 'pill-default';
+
+    return <span className={`admin-pill ${pillClass}`}>{statusLabels[status] || status}</span>;
   };
 
   return (
@@ -70,6 +92,7 @@ export default function AdminRendezVousPage() {
                 <th>{labels.service}</th>
                 <th>{labels.motif}</th>
                 <th>{labels.status}</th>
+                <th>{labels.actions}</th>
               </tr>
             </thead>
             <tbody>
@@ -82,6 +105,18 @@ export default function AdminRendezVousPage() {
                   <td>{rdv.service || '-'}</td>
                   <td>{rdv.motif || '-'}</td>
                   <td>{getStatusBadge(rdv.statut)}</td>
+                  <td>
+                    <select
+                      className="admin-select"
+                      value={rdv.statut}
+                      disabled={rdv.statut === 'passe'}
+                      onChange={(e) => handleUpdateStatus(rdv.id, e.target.value)}
+                    >
+                      {statusOptions.map(status => (
+                        <option key={status} value={status}>{statusLabels[status]}</option>
+                      ))}
+                    </select>
+                  </td>
                 </tr>
               ))}
             </tbody>

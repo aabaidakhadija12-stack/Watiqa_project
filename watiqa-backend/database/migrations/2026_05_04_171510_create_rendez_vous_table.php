@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('heure_rdv', 5);
             $table->string('motif', 255);
             $table->string('service', 100)->default('Guichet principal');
-            $table->enum('statut', ['confirme', 'annule', 'passe'])->default('confirme');
+            $table->enum('statut', ['en_attente', 'confirme', 'annule', 'passe'])->default('en_attente');
             $table->timestamps();
 
             $table->index(['date_rdv', 'heure_rdv']);

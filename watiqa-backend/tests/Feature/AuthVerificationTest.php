@@ -18,6 +18,8 @@ class AuthVerificationTest extends TestCase
         $response = $this->postJson('/api/auth/register', [
             'name' => 'Test User',
             'email' => 'test@example.com',
+            'phone' => '+212612345678',
+            'cin' => 'AB123456',
             'password' => 'password123',
             'password_confirmation' => 'password123',
         ]);
@@ -34,6 +36,26 @@ class AuthVerificationTest extends TestCase
         $this->assertNull($user->email_verified_at);
         $this->assertNotNull($user->email_verification_code);
         $this->assertNotNull($user->email_verification_code_expires_at);
+        $this->assertSame('+212612345678', $user->phone);
+        $this->assertSame('AB123456', $user->cin);
+    }
+
+    public function test_register_validates_phone_cin_and_name(): void
+    {
+        Mail::fake();
+
+        $response = $this->postJson('/api/auth/register', [
+            'name' => '1111',
+            'email' => 'bad@example.com',
+            'phone' => '0612345678',
+            'cin' => 'a123',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+        ]);
+
+        $response
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['name', 'phone', 'cin']);
     }
 
     public function test_unverified_user_can_request_a_new_verification_code(): void
