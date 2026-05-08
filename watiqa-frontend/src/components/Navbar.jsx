@@ -82,13 +82,17 @@ export default function Navbar() {
           </div>
         </div>
 
-        <button className={`nav-link ${isActive('/suivi') ? 'active' : ''}`} onClick={() => navigate('/suivi')}>
-          {tr.suivi}
-        </button>
+        {user?.role !== 'admin' && (
+          <>
+            <button className={`nav-link ${isActive('/suivi') ? 'active' : ''}`} onClick={() => navigate('/suivi')}>
+              {tr.suivi}
+            </button>
 
-        <button className={`nav-link ${isActive('/rendezvous') ? 'active' : ''}`} onClick={() => navigate('/rendezvous')}>
-          {tr.rendezvous}
-        </button>
+            <button className={`nav-link ${isActive('/rendezvous') ? 'active' : ''}`} onClick={() => navigate('/rendezvous')}>
+              {tr.rendezvous}
+            </button>
+          </>
+        )}
 
         <button className={`nav-link ${isActive('/assistant') ? 'active' : ''}`} onClick={() => navigate('/assistant')}>
           {tr.assistant}

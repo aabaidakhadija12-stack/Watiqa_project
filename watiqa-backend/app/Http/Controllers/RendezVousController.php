@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RendezVous;
+use App\Models\Demande;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreRendezVousRequest;
 use Carbon\Carbon;
@@ -55,6 +56,23 @@ class RendezVousController extends Controller
     public function store(StoreRendezVousRequest $request)
     {
         $data = $request->validated();
+        $dateTime = Carbon::parse($data['date_rdv'] . ' ' . $data['heure_rdv']);
+
+        if ($dateTime->lessThanOrEqualTo(Carbon::now())) {
+            return response()->json([
+                'message' => 'Impossible de prendre un rendez-vous dans le passe.',
+            ], 422);
+        }
+
+        $hasMatchingDemande = Demande::where('user_id', $request->user()->id)
+            ->where('type', $data['demande_type'])
+            ->exists();
+
+        if (! $hasMatchingDemande) {
+            return response()->json([
+                'message' => 'Vous devez d abord creer une demande pour cette watiqa.',
+            ], 422);
+        }
 
         $exists = RendezVous::where('date_rdv', $data['date_rdv'])
             ->where('heure_rdv', $data['heure_rdv'])

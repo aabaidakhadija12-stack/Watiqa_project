@@ -18,6 +18,7 @@ class StoreRendezVousRequest extends FormRequest
             'heure_rdv' => 'required|string|regex:/^\\d{2}:\\d{2}$/',
             'motif'     => 'required|string|max:255',
             'service'   => 'nullable|string|max:100',
+            'demande_type' => 'required|in:naissance,deces,celibat,residence,vie,casier_judiciaire',
         ];
     }
 }

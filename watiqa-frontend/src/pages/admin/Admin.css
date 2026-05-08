@@ -397,10 +397,71 @@ html[dir="rtl"] .admin-stat-card::before {
 
   .admin-sidebar {
     width: 100%;
+    min-height: auto;
+  }
+
+  .admin-sidebar-header {
+    padding: 0.25rem 1rem 0.5rem;
+  }
+
+  .admin-sidebar-logo {
+    height: 68px;
+  }
+
+  .admin-sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 0.75rem;
+    gap: 0.5rem;
+  }
+
+  .admin-nav-item {
+    width: auto;
+    white-space: nowrap;
+    padding: 0.75rem 1rem;
+  }
+
+  .admin-sidebar-footer {
+    flex-direction: row;
+    padding: 0.75rem;
+  }
+
+  .admin-main {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .admin-header {
+    height: auto;
+    padding: 1rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .admin-header-actions {
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  .admin-content {
+    padding: 1rem;
   }
 
   .admin-stats-grid {
     grid-template-columns: 1fr;
+  }
+
+  .admin-table-container {
+    padding: 0.75rem;
+  }
+
+  .admin-table th,
+  .admin-table td {
+    padding: 0.85rem 0.75rem;
+    white-space: nowrap;
   }
 }
 

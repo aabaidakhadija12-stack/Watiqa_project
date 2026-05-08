@@ -24,19 +24,24 @@ import { LanguageProvider } from './context/LanguageContext';
 
 import './App.css';
 
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
+const ProtectedRoute = ({ children, requireAdmin = false, citizenOnly = false }) => {
   const { user, loading } = useAuth();
   const location = useLocation();
 
   if (loading) return <div className="app flex items-center justify-center min-h-screen"><div className="spinner"></div></div>;
   if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
   if (requireAdmin && user.role !== 'admin') return <Navigate to="/" replace />;
+  if (citizenOnly && user.role === 'admin') return <Navigate to="/admin" replace />;
 
   return children;
 };
 
 const AdminRoute = ({ children }) => {
   return <ProtectedRoute requireAdmin={true}>{children}</ProtectedRoute>;
+};
+
+const CitizenRoute = ({ children }) => {
+  return <ProtectedRoute citizenOnly={true}>{children}</ProtectedRoute>;
 };
 
 const MainApp = () => {
@@ -49,8 +54,8 @@ const MainApp = () => {
         
         {/* Protected User Routes */}
         <Route path="/guichet" element={<ProtectedRoute><GuichetPage /></ProtectedRoute>} />
-        <Route path="/suivi" element={<ProtectedRoute><SuiviPage /></ProtectedRoute>} />
-        <Route path="/rendezvous" element={<ProtectedRoute><RendezVousPage /></ProtectedRoute>} />
+        <Route path="/suivi" element={<CitizenRoute><SuiviPage /></CitizenRoute>} />
+        <Route path="/rendezvous" element={<CitizenRoute><RendezVousPage /></CitizenRoute>} />
         
         {/* Forms */}
         <Route path="/form-naissance" element={<ProtectedRoute><FormNaissance /></ProtectedRoute>} />

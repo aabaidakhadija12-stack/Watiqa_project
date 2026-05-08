@@ -5,13 +5,16 @@ import Footer from '../../components/Footer';
 import { Stepper, FormSection, FormField, Counter, RadioGroup } from '../../components/FormField';
 import { useT } from '../../i18n';
 import { useLanguage } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
 import api from '../../api/api';
 
 export function FormLayout({ title, subtitle, icon, children, onSubmit }) {
   const navigate = useNavigate();
   const { lang } = useLanguage();
+  const { user } = useAuth();
   const tr = useT(lang);
   const isRTL = lang === 'ar';
+  const isAdminPreview = user?.role === 'admin';
   
   const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
@@ -31,6 +34,8 @@ export function FormLayout({ title, subtitle, icon, children, onSubmit }) {
     // if a custom onSubmit prop is provided, call it with the form data
     const getForm = formGetterRef.current;
     const type = formTypeRef.current;
+
+    if (isAdminPreview) return;
 
     if (onSubmit) {
       try {
@@ -108,7 +113,18 @@ export function FormLayout({ title, subtitle, icon, children, onSubmit }) {
 
         {children({ tr, isRTL, registerSubmit })}
 
-        <button className="btn btn-primary btn-full btn-lg" style={{ marginTop: '1rem' }} onClick={handleSubmit} disabled={submitting}>
+        {isAdminPreview && (
+          <div className="alert alert-warning" style={{ marginTop: '1rem', display: 'block', textAlign: isRTL ? 'right' : 'left' }}>
+            <strong>{lang === 'ar' ? 'وضع المعاينة' : 'Mode aperçu'}</strong>
+            <div style={{ marginTop: 6 }}>
+              {lang === 'ar'
+                ? 'أنت تشاهد هذا النموذج كمسؤول فقط. لا يمكن إنشاء طلب من حساب الإدارة.'
+                : "Vous consultez ce formulaire en tant qu'administrateur. La création de demande est désactivée pour ce compte."}
+            </div>
+          </div>
+        )}
+
+        <button className="btn btn-primary btn-full btn-lg" style={{ marginTop: '1rem' }} onClick={handleSubmit} disabled={submitting || isAdminPreview}>
           {submitting ? (lang === 'ar' ? 'جارٍ الإرسال...' : 'Envoi...') : (<>{tr.submit} →</>)}
         </button>
 

@@ -35,7 +35,7 @@ export default function HomePage() {
       <Navbar />
 
       {/* Hero */}
-      <div style={{ paddingBlockStart: '16vh', paddingInlineEnd: '4rem', paddingInlineStart: '4rem', maxWidth: '1200px', margin: '0 auto', textAlign: isRTL ? 'right' : 'left', minHeight: '88vh', display: 'flex', flexDirection: 'column' }} className="fade-in">
+      <div style={{ textAlign: isRTL ? 'right' : 'left' }} className="home-hero fade-in">
         <h1 style={{ fontSize: isRTL ? 'clamp(2.6rem, 4vw, 3.8rem)' : 'clamp(2.2rem, 3.5vw, 3.2rem)', fontWeight: 700, color: '#1a4a2e', lineHeight: isRTL ? 1.5 : 1.2, marginBottom: isRTL ? '1.8rem' : '1.25rem', whiteSpace: 'normal', maxWidth: '650px' }}>
           {tr.hero_title}
         </h1>
@@ -43,7 +43,7 @@ export default function HomePage() {
           {isRTL ? tr.hero_sub : `${tr.hero_sub1}\n${tr.hero_sub2}`}
         </p>
 
-        <div style={{ display: 'flex', gap: isRTL ? '1.5rem' : '1rem', flexWrap: 'nowrap' }}>
+        <div className="home-hero-actions" style={{ gap: isRTL ? '1.5rem' : '1rem' }}>
           <button className="btn btn-primary btn-lg" onClick={() => navigate('/guichet')} style={{ padding: isRTL ? '14px 36px' : undefined, fontSize: isRTL ? '1.1rem' : undefined }}>
             {tr.start_request}
           </button>
@@ -56,11 +56,11 @@ export default function HomePage() {
       </div>
 
       {/* Features */}
-      <div style={{ padding: '2rem 2rem 3rem', maxWidth: '100%', margin: '0 auto' }}>
+      <div className="home-features">
         <h2 style={{ textAlign: 'center', fontSize: '1.9rem', color: '#1a4a2e', marginBottom: '1rem' }}>
           {lang === 'ar' ? 'كيف يعمل؟' : 'Comment ça marche'}
         </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1.25rem' }}>
+        <div className="home-features-grid">
           {[
             { icon: icon1, title: lang === 'ar' ? 'إنشاء طلب' : 'Créer une demande', desc: lang === 'ar' ? 'أنشئ طلبك بسهولة' : 'Créer votre demande.' },
             { icon: icon2, title: lang === 'ar' ? 'دفع رسوم الإرسال' : "Payer les frais d'envoi", desc: lang === 'ar' ? 'ادفع بأمان ببطاقة بنكية' : 'Payer les frais de la commande en toute sécurité avec une carte bancaire.' },
@@ -77,11 +77,11 @@ export default function HomePage() {
       </div>
 
       {/* Map Section */}
-      <div style={{ marginTop: '2rem', padding: '1.5rem 2rem 0' }}>
+      <div className="home-map-section">
         <h2 style={{ textAlign: 'center', fontSize: '1.8rem', color: '#1a4a2e', marginBottom: '1rem' }}>
           {tr.offices}
         </h2>
-        <div style={{ height: '350px', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.1)' }}>
+        <div className="home-map-frame">
           <MapContainer center={[31.7917, -7.0926]} zoom={6} style={{ height: '100%', width: '100%' }}>
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
